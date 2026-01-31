@@ -59,8 +59,6 @@ def main():
     worksheet_name = args.seccion
     worksheet = sheet.get_worksheet(worksheet_name)
 
-    # print(f"-> Updating attendance for section: {worksheet_name} <-")
-
     # Get all headers
     headers = worksheet.row_values(1)
 
@@ -71,8 +69,7 @@ def main():
     if today not in headers:
         col_index = len(headers) + 1
         
-        # OPCIÓN A: Insertar columna (Mantiene el formato de la tabla)
-        # insert_cols añade una columna vacía y desplaza/extiende el formato
+        # insert_cols add a new column at the end with today's date as header
         worksheet.insert_cols([[today]], col=col_index, inherit_from_before=True)
 
         worksheet.update_cell(1, col_index, today)
