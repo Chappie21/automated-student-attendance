@@ -45,22 +45,34 @@ GOOGLE_SPREADSHEET_KEY=your_spreadsheet_key
 
 ## 🚀 Usage
 
-Main command (requires `--image` and `--seccion`):
+Interactive mode (recommended):
 
 ```bash
-python main.py --image path/to/list.jpg --seccion "YourSectionName" [--date YYYY-MM-DD] [--debugging True]
+python main.py
 ```
 
-Options:
-- `--image, -i`: Path to the list image (required).
-- `--seccion, -s`: Worksheet name where attendance will be marked (required).
-- `--date, -d`: Date for the column (defaults to today, format `YYYY-MM-DD`).
-- `--debugging, -dbg`: Debug mode to print the raw model response.
+Follow the interactive menu:
+- `1` - Search for photo and evaluate attendance (full flow)
+- `2` - Mark attendance in Google Sheets (coming soon)
+- `3` - Help
+- `4` - Exit
 
-Internal flow:
-1. `GeminiAdapter.generate_from_image()` sends the image and `prompt.txt` content to the model.
-2. `convertToList()` extracts the JSON array from the response.
-3. `SheetsAdapter` creates/updates the date column and marks `P`/`A` values.
+Option 1 flow (what the script does):
+1. Prompts for the image path and validates the file exists.
+2. Prompts for the worksheet (section) name and an optional date (YYYY-MM-DD).
+3. Shows progress messages/loaders while calling the Gemini API to extract the list and while connecting to Google Sheets.
+4. Uses `convertToList()` to parse the model response and `SheetsAdapter` to create/update the date column and mark `P`/`A`.
+
+Notes:
+- The interactive UI is implemented by `utils.menu.AttendanceUI` (uses `questionary` + `rich`).
+- The interactive loop and option-1 logic were extracted into `utils/attendance_runner.py` and are invoked from `main.py` via `run_attendance_flow(ui, client, textPrompt)`.
+- If you want non-interactive/scripted runs, you can adapt `main.py` to call the adapters directly or add CLI parsing.
+
+Internal flow (implementation details):
+1. `AttendanceUI` collects user input and displays loaders/messages.
+2. `GeminiAdapter.generate_from_image()` sends the image and `prompt.txt` content to the model.
+3. `convertToList()` extracts the JSON array from the response.
+4. `SheetsAdapter` creates/updates the date column and marks `P`/`A` values.
 
 ---
 
