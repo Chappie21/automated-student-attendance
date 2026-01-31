@@ -1,9 +1,11 @@
 import gspread
-# Cambiamos la librería de autenticación
 from google.oauth2.service_account import Credentials
+from utils.menu import AttendanceUI
 
 class SheetsAdapter:
     def __init__(self, creds_json_path: str, spreadsheet_key: str):
+        self.ui = AttendanceUI()
+
         scope = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive"
@@ -13,15 +15,12 @@ class SheetsAdapter:
             creds = Credentials.from_service_account_file(creds_json_path, scopes=scope)
             
             self.client = gspread.authorize(creds)
-            
             self.spreadsheet = self.client.open_by_key(spreadsheet_key)
             
-            print(f"Conection succes to : {self.spreadsheet.title} spreadsheet")
-            
         except gspread.exceptions.SpreadsheetNotFound:
-            print(f"Error: Spreadsheet '{spreadsheet_key}' not found. Did you share it with the service account email?")
+            self.ui.show_error(f"Error: Spreadsheet '{spreadsheet_key}' not found. Did you share it with the service account email?")
         except Exception as e:
-            print(f"Error on initialize: {type(e).__name__} - {e}")
+            self.ui.show_error(f"Error on initialize: {type(e).__name__} - {e}")
             raise
 
     def get_worksheet(self, worksheet_name: str):
