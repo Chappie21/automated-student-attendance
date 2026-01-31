@@ -1,7 +1,7 @@
 from model.geminiAdapter import GeminiAdapter
 from dotenv import load_dotenv
 from utils.menu import AttendanceUI
-from utils.attendance_runner import run_attendance_flow
+from utils.attendanceRunner import run_attendance_flow
 import os
 
 load_dotenv()
