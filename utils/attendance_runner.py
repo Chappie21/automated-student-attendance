@@ -43,7 +43,7 @@ def run_attendance_flow(ui: AttendanceUI, client: GeminiAdapter, text_prompt: st
         response_dict = convertToList(response)
     except Exception as e:
         ui.show_error(f"Failed to communicate with Gemini: {e}")
-        return
+        raise
 
     ui.stop_loading()
     ui.show_success("Image processed successfully!")
@@ -58,6 +58,8 @@ def run_attendance_flow(ui: AttendanceUI, client: GeminiAdapter, text_prompt: st
         # Create a new column with the date of today if not exists
         worksheet_name = seccion
         worksheet = sheet.get_worksheet(worksheet_name)
+
+        ui.show_success(f"Connected to worksheet: {worksheet_name} successfully!")
 
         # Get all headers
         headers = worksheet.row_values(1)
@@ -105,7 +107,7 @@ def run_attendance_flow(ui: AttendanceUI, client: GeminiAdapter, text_prompt: st
 
     except Exception as e:
         ui.show_error(f"Failed to mark attendance in Google Sheets: {e}")
-        return
+        raise
 
     ui.stop_loading()
     ui.show_success("Attendance marked successfully!")
