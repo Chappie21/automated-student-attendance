@@ -5,7 +5,7 @@ from utils.converter import convertToList
 from datetime import datetime
 import os
 
-def run_attendance_flow(ui: AttendanceUI, client: GeminiAdapter, text_prompt: str):
+def run_attendance_flow(ui: AttendanceUI, client: GeminiAdapter, sheet: SheetsAdapter, text_prompt: str):
     """
         Run the interactive attendance loop. This function contains the same
         logic previously in `main.py` and was extracted here to keep the main
@@ -14,6 +14,7 @@ def run_attendance_flow(ui: AttendanceUI, client: GeminiAdapter, text_prompt: st
         Parameters:
         - ui: AttendanceUI instance
         - client: GeminiAdapter instance
+        - sheet: SheetsAdapter instance
         - text_prompt: prompt text (string)
     """
 
@@ -50,11 +51,6 @@ def run_attendance_flow(ui: AttendanceUI, client: GeminiAdapter, text_prompt: st
 
     ui.start_loading("Connecting to Google Sheets and marking attendance")
     try:
-        sheet = SheetsAdapter(
-            creds_json_path=os.getenv("GOOGLE_CREDS_JSON_PATH"),
-            spreadsheet_key=os.getenv("GOOGLE_SPREADSHEET_KEY")
-        )
-
         # Create a new column with the date of today if not exists
         worksheet_name = seccion
         worksheet = sheet.get_worksheet(worksheet_name)
@@ -111,3 +107,57 @@ def run_attendance_flow(ui: AttendanceUI, client: GeminiAdapter, text_prompt: st
 
     ui.stop_loading()
     ui.show_success("Attendance marked successfully!")
+
+
+def mark_student_attendance(sheet: SheetsAdapter, ui: AttendanceUI):
+    """
+        Mark attendance for a single student in the worksheet.
+
+        Parameters:
+        - sheet: SheetsAdapter instance
+        - ui: AttendanceUI instance
+    """
+    try:
+        # Request section and date
+        seccion = ui.request_input("Please provide the section name (worksheet name in Google Sheets):", "Section: ")
+        
+        ui.start_loading(f"Connecting to worksheet: {seccion}")
+        worksheet = sheet.get_worksheet(seccion)
+        ui.stop_loading()
+        ui.show_success(f"Connected to worksheet: {seccion} successfully!")
+
+        student_id = ui.request_input("Enter the student ID to mark attendance for:", "Student ID: ")
+
+        cell = worksheet.find(str(student_id))
+        row_number = cell.row
+
+        # request date column (today by default) and mark attendance with "P" (Present) or "A" (Absent)
+        cDate = ui.request_input("Enter the date for marking attendance (YYYY-MM-DD) or leave blank for today:", "Date (optional): ")
+
+        if not cDate:
+            cDate = datetime.now().strftime("%Y-%m-%d")
+
+        # Check if the date column exists, if not create it
+        headers = worksheet.row_values(1)
+
+        if cDate not in headers:
+            new_col_index = len(headers) + 1
+            worksheet.insert_cols([[cDate]], col=new_col_index, inherit_from_before=True)
+            worksheet.update_cell(1, new_col_index, cDate)
+            col_index = new_col_index
+        else:
+            col_index = headers.index(cDate) + 1
+
+        status = ui.request_input("Enter attendance status (P for Present, A for Absent):", "Status (P/A): ").upper()
+
+        ui.start_loading(f"Marking attendance for ID {student_id}")
+
+        # Mark attendance with "P" (Present) or "A" (Absent)
+        worksheet.update_cell(row_number, col_index, status)
+        ui.stop_loading()
+
+        ui.show_success(f"Attendance for student ID {student_id} marked as '{status}' on {cDate} successfully!")
+
+    except Exception as e:
+        ui.stop_loading()
+        ui.show_error(f"Error marking attendance: {e}")
