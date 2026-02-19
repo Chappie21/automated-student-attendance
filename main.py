@@ -1,7 +1,8 @@
 from model.geminiAdapter import GeminiAdapter
+from model.sheetsAdapter import SheetsAdapter
 from dotenv import load_dotenv
 from utils.menu import AttendanceUI
-from utils.attendanceRunner import run_attendance_flow
+from utils.attendanceRunner import run_attendance_flow, mark_student_attendance
 import os
 
 load_dotenv()
@@ -12,6 +13,11 @@ def main():
     client = GeminiAdapter(
         api_key=os.getenv("GEMINI_API_KEY"),
         model=os.getenv("GEMINI_MODEL")
+    )
+
+    sheet = SheetsAdapter(
+        creds_json_path=os.getenv("GOOGLE_CREDS_JSON_PATH"),
+        spreadsheet_key=os.getenv("GOOGLE_SPREADSHEET_KEY")
     )
 
     # read prompt from prompt.txt
@@ -35,9 +41,11 @@ def main():
 
         # Handle menu choices
         if choice == 1:
-            run_attendance_flow(ui, client, textPrompt)
+            run_attendance_flow(ui, client, sheet, textPrompt)
+
         elif choice == 2:
-            ui.show_info("Mark attendance in Google Sheets feature is coming soon!")
+            mark_student_attendance(sheet, ui)
+
         elif choice == 3:
             ui.help_menu()
 
